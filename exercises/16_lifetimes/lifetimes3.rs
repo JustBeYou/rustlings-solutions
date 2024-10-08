@@ -2,8 +2,8 @@
 
 // TODO: Fix the compiler errors about the struct.
 struct Book {
-    author: &str,
-    title: &str,
+    author: &'static str,
+    title: &'static str,
 }
 
 fn main() {
