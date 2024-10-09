@@ -5,7 +5,7 @@
 // https://doc.rust-lang.org/std/convert/trait.TryFrom.html
 
 #![allow(clippy::useless_vec)]
-use std::convert::{TryFrom, TryInto};
+use std::{convert::{TryFrom, TryInto}, iter::Skip};
 
 #[derive(Debug, PartialEq)]
 struct Color {
@@ -28,14 +28,27 @@ enum IntoColorError {
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = IntoColorError;
 
-    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {}
+    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        let (r, g, b) = tuple;
+        if 0 <= r && r <= 255 && 0 <= g && g <= 255 && 0 <= b && b <= 255 {
+            return Ok(Self { red: r as u8, green: g as u8, blue: b as u8 })
+        }
+
+        Err(IntoColorError::IntConversion)
+    }
 }
 
 // TODO: Array implementation.
 impl TryFrom<[i16; 3]> for Color {
     type Error = IntoColorError;
 
-    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {}
+    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+       if let (Some(r), Some(g), Some(b)) = (arr.get(0), arr.get(1), arr.get(2)) {
+            return Color::try_from((*r, *g, *b));
+       }
+
+       Err(IntoColorError::BadLen)
+    }
 }
 
 // TODO: Slice implementation.
@@ -43,7 +56,17 @@ impl TryFrom<[i16; 3]> for Color {
 impl TryFrom<&[i16]> for Color {
     type Error = IntoColorError;
 
-    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {}
+    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        if slice.len() > 3 {
+            return Err(IntoColorError::BadLen);
+        }
+
+        if let (Some(r), Some(g), Some(b)) = (slice.get(0), slice.get(1), slice.get(2)) {
+            return Color::try_from((*r, *g, *b));
+       }
+
+       Err(IntoColorError::BadLen)
+    }
 }
 
 fn main() {
